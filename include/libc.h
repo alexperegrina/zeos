@@ -20,4 +20,11 @@ int fork();
 
 void exit();
 
+int write (int fd, char * buffer, int size);
+
+void perrno(int error);
+
+int gettime();
+
+
 #endif  /* __LIBC_H__ */

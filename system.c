@@ -1,8 +1,10 @@
 /*
  * system.c - 
  */
+ 
 
 #include <segment.h>
+#include <vars_global.h>
 #include <types.h>
 #include <interrupt.h>
 #include <hardware.h>
@@ -13,6 +15,7 @@
 #include <utils.h>
 #include <zeos_mm.h> /* TO BE DELETED WHEN ADDED THE PROCESS MANAGEMENT CODE TO BECOME MULTIPROCESS */
 
+int  zeos_ticks;
 
 int (*usr_main)(void) = (void *) PH_USER_START;
 unsigned int *p_sys_size = (unsigned int *) KERNEL_START;
@@ -71,6 +74,7 @@ int __attribute__((__section__(".text.main")))
   set_seg_regs(__KERNEL_DS, __KERNEL_DS, (DWord) &protected_tasks[5]);
 
   printk("Kernel Loaded!    "); 
+  zeos_ticks = 0;
 
   /* Initialize hardware data */
   setGdt(); /* Definicio de la taula de segments de memoria */
@@ -106,6 +110,7 @@ int __attribute__((__section__(".text.main")))
   return_gate(__USER_DS, __USER_DS, USER_ESP, __USER_CS, L_USER_START);
 
   /* The execution never arrives to this point */
+
   return 0;
 }
 

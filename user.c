@@ -1,8 +1,12 @@
-#include <libc.h>
+#include <libc.h> 
 
 char buff[24];
 
 int pid;
+
+#define SECS_PER_MIN 60
+#define SECS_PER_HOUR 3600 
+
 
 long inner(long n)
 {
@@ -32,8 +36,12 @@ int __attribute__ ((__section__(".text.main")))
     count = 75;
     acum = 0;
     acum = outer(count);
-    while (1);
-    return 0;
+    acum += 0;  //para quitar un warning  warning: variable ‘acum’ set but not used [-Wunused-but-set-variable]
+   
     
-  while(1) { }
+  while(1) {
+    }
+    
+  
+  return 0;
 }

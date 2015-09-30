@@ -1,0 +1,7 @@
+gcc -E -Iinclude -traditional bootsect.S -o bootsect.s
+as86 -0 -a -o bootsect.o bootsect.s
+ld86 -0 -s -o bootsect bootsect.o
+gcc -O2  -g  -fno-omit-frame-pointer -ffreestanding -Wall -Iinclude   -c -o interrupt.o interrupt.c
+gcc -E -Iinclude -o entry.s entry.S
+as   -o entry.o entry.s
+<builtin>: recipe for target 'entry.o' failed

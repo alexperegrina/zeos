@@ -2,11 +2,12 @@
  * interrupt.c -
  */
 #include <types.h>
+#include <vars_global.h>
 #include <interrupt.h>
 #include <segment.h> 
 #include <hardware.h>
 #include <io.h>
-
+#include <entry.h>
 #include <zeos_interrupt.h>
 
 Gate idt[IDT_ENTRIES];
@@ -86,8 +87,9 @@ void setIdt()
 
   /* ADD INITIALIZATION CODE FOR INTERRUPT VECTOR */
   
-  setInterruptHandler(33, keyboard_handler, 0);
-  setTrapHandler(0x80, sys_call_handler,3);
+  setInterruptHandler(33, keyboard_handler , 0);
+  setInterruptHandler(32, clock_handler , 0);
+  setTrapHandler(0x80, system_call_handler ,3);
 
   set_idt_reg(&idtR);
 }
@@ -96,11 +98,19 @@ void keyboard_routine(){
   
   char key_pressed = inb(0X60);
   
-  if(!(key_pressed >> 6)) {
+  if(! (key_pressed & 0x80)) {
 	char aux = char_map[key_pressed&0x7f];
 	if(aux == '\0') aux = 'C';
-	printc_xy(30, 30, aux);    
+	printc_xy(20, 20, aux);    
   }
+  
+}
+
+
+void clock_routine(){
+  
+  zeos_show_clock();
+  zeos_ticks ++; 
   
 }
 

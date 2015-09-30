@@ -3,12 +3,17 @@
  */
 
 #include <libc.h>
-
 #include <types.h>
 
-#include <errno.h>
-
 int errno;
+
+void perrno(int error){
+    
+  switch(errno) {    
+      case -14: write(123, "bad address", 3); ; break;
+      case -22: write(123, "invalid arguments", 3); ; break;  
+  }
+}
 
 void itoa(int a, char *b)
 {
@@ -46,23 +51,37 @@ int strlen(char *a)
 }
 
 int write (int fd, char * buffer, int size){
-  int result;
-  char msg[] = "Este es el mensaje de error";
-  _asm_(
-    "movw 8(%ebp), %ebx"
-    "movw 12(%ebp), %ecx"
-    "movw 16(%ebp), %edx"
-    "movw $4, %eax"
+  
+   int result = 0; 
+  __asm__ volatile(
     "int $0x80"
-    "movw %eax, -4(%ebp)"
-  );
+     :"=a" (result)
+     : "a"  (4), "b" (fd), "c" (buffer), "d" (size));
 
   if(result < 0) {
-    errno = result * -1;
-    perrno(msg);
+    errno = -result;
     result = -1;
   }
   
   return result;
 }
+
+
+int gettime(){
+  
+   int result = 0; 
+  __asm__ volatile(
+    "int $0x80"
+    : "=a" (result)
+    : "a"  (10));
+
+  if(result < 0) {
+    errno = -result;
+    result = -1;
+  }
+  return result;
+  
+}
+
+
 

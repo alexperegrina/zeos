@@ -1,4 +1,5 @@
 # 1 "sys_call_table.S"
+# 1 "<built-in>"
 # 1 "<command-line>"
 # 1 "/usr/include/stdc-predef.h" 1 3 4
 # 1 "<command-line>" 2
@@ -10,3 +11,15 @@
 
 .globl sys_call_table; .type sys_call_table, @function; .align 0; sys_call_table:
  .long sys_ni_syscall
+ .long sys_ni_syscall
+ .long sys_ni_syscall
+ .long sys_ni_syscall
+ .long sys_write
+ .long sys_ni_syscall
+ .long sys_ni_syscall
+ .long sys_ni_syscall
+ .long sys_ni_syscall
+ .long sys_ni_syscall
+ .long sys_gettime
+.global MAX_SYSCALL
+MAX_SYSCALL = (. - sys_call_table)/4

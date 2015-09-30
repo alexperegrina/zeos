@@ -1,6 +1,5 @@
 #include <utils.h>
 #include <types.h>
-
 #include <mm_address.h>
 
 void copy_data(void *start, void *dest, int size)
