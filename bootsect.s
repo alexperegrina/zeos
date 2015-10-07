@@ -49,7 +49,7 @@
 # 1 "<command-line>" 2
 # 1 "bootsect.S"
 !
-!	bootsect.s    
+!	bootsect.s
 !
 ! bootsect.s � la versi�simplificada del bootsect.s original de Linux.
 ! L'arxiu compilat hauria d'ocupar, sense les capceleres, exactament 512
@@ -380,7 +380,7 @@ sectors:
 
 msg1:
 	.byte 13,10
-	.ascii "Loading.."
+	.ascii "cagando.."
 
 .org 435
 gdt:		

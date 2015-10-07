@@ -1,7 +1,7 @@
 /*
- * system.c - 
+ * system.c -
  */
- 
+
 
 #include <segment.h>
 #include <vars_global.h>
@@ -39,7 +39,7 @@ unsigned int *p_rdtr = (unsigned int *) KERNEL_START+2;
  */
 
 /*
- * This function MUST be 'inline' because it modifies the %esp 
+ * This function MUST be 'inline' because it modifies the %esp
  */
 inline void set_seg_regs(Word data_sel, Word stack_sel, DWord esp)
 {
@@ -60,8 +60,8 @@ inline void set_seg_regs(Word data_sel, Word stack_sel, DWord esp)
 /*
  *   Main entry point to ZEOS Operating System
  */
-int __attribute__((__section__(".text.main"))) 
-  main(void) 
+int __attribute__((__section__(".text.main")))
+  main(void)
 {
 
   set_eflags();
@@ -73,7 +73,7 @@ int __attribute__((__section__(".text.main")))
   // (we are still in real mode).
   set_seg_regs(__KERNEL_DS, __KERNEL_DS, (DWord) &protected_tasks[5]);
 
-  printk("Kernel Loaded!    "); 
+  printk("Kernel Loaded!    ");
   zeos_ticks = 0;
 
   /* Initialize hardware data */
@@ -99,9 +99,9 @@ int __attribute__((__section__(".text.main")))
   /* Move user code/data now (after the page table initialization) */
   copy_data((void *) KERNEL_START + *p_sys_size, usr_main, *p_usr_size);
 
-  
-  printk("Entering user mode..."); 
-  
+
+  printk("Entering user mode...");
+
   enable_int();
   /*
    * We return from a 'theorical' call to a 'call gate' to reduce our privileges
@@ -113,5 +113,3 @@ int __attribute__((__section__(".text.main")))
 
   return 0;
 }
-
-
