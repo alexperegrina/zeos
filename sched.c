@@ -15,6 +15,7 @@ union task_union protected_tasks[NR_TASKS+2]
 
 union task_union *task = &protected_tasks[1]; /* == union task_union task[NR_TASKS] */
 
+// ******************************* ESTO PORQUE SI NUNCA ENTRARA
 #if 0
 struct task_struct *list_head_to_task_struct(struct list_head *l)
 {
@@ -25,6 +26,8 @@ struct task_struct *list_head_to_task_struct(struct list_head *l)
 extern struct list_head blocked;
 struct list_head freequeue;
 struct list_head readyqueue;
+
+struct task_struct * idle_task;
 
 
 /* get_DIR - Returns the Page Directory address for task 't' */
@@ -63,6 +66,47 @@ void cpu_idle(void)
 
 void init_idle (void)
 {
+  //comprobamos que no este vaci la lista
+  if(!list_empty(&freequeue)) {
+    //cojemos el primer PCB libre para asignarle el idle
+    struct list_head * listHead = list_first(&freequeue);
+
+    //cojemos el container del elemento
+    //struct task_union * realelement = list_entry(listHead, struct task_union, task.list);
+    //V2
+    struct task_struct * taskStruct = list_head_to_task_struct(listHead);
+
+    //eliminamos el elemento de la freequeue ya que no esta libre
+    list_del(listHead);
+
+    //Asignamos el PID 0 al proceso
+    taskStruct->PID = 0;
+    //inicializamos la variable global para acceder de una forma facil al idle
+    idle_task = taskStruct;
+
+    //inicializamos la estructura task_union
+    union task_union * taskUnion = taskStruct;
+
+    //inicializamos la tabla de paginas
+    allocate_DIR(taskStruct);
+
+
+    /* INICIALIZAMOS EL CONTEXTO DE EJECUCION */
+
+    //añadimos en la pila del proceso la direccion de memoria de la funcion
+    //que queremos que se ejecute.
+    list_add(&cpu_idle, &(taskUnion->stack));
+
+    //añadimos en la pila del proceso el valor 0 (No se para que????)
+    list_add(0, &(taskUnion->stack));
+
+    // Creo que esto hace lo mismo que las 2 lineas anterirores pero de
+    // forma manual
+    //taskUnion->stack[KERNEL_STACK_SIZE-1] = &cpu_idle;
+    //taskUnion->stack[KERNEL_STACK_SIZE-2] = 0;
+
+  }
+
 }
 
 void init_task1(void)
@@ -80,7 +124,6 @@ void init_sched(){
   for(i = 0; i < NR_TASKS; i++) {
     // encolamos los procesos libres
     list_add_tail( &(protected_tasks[i].task.list), &freequeue );
-
   }
 }
 
