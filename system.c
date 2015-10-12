@@ -111,5 +111,8 @@ int __attribute__((__section__(".text.main")))
 
   /* The execution never arrives to this point */
 
+  //ejecutamos de forma manual el proceso idle
+  //task_switch(&idle_task);
+
   return 0;
 }

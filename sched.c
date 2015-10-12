@@ -6,6 +6,7 @@
 #include <mm.h>
 #include <io.h>
 #include <vars_global.h>
+#include <mm_address.h>
 
 /**
  * Container for the Task array and 2 additional pages (the first and the last one)
@@ -168,11 +169,29 @@ struct task_struct* current()
   return (struct task_struct*)(ret_value&0xfffff000);
 }
 
+// doc: https://www.ibiblio.org/gferg/ldp/GCC-Inline-Assembly-HOWTO.html
+void inner_task_switch(union task_union*t){
+  tss.esp0 = (DWord) &t->stack[KERNEL_STACK_SIZE];
+  set_cr3(t->task.dir_pages_baseAddr);
+
+  struct task_struct *taskCurrent = current();
+  //void * old = PH_PAGE(((int) &taskCurrent));
+  void * old = PH_PAGE(*(int*)(void *)(&taskCurrent));
+  void * new = PH_PAGE((int)&(t->task)); // cojemos la posicion incial del task_union
+
+  __asm__ __volatile__(
+    "movl %%ebp,%0;"
+    "movl %1,%%esp;"
+    "popl %%ebp;"
+    "ret;"
+    :
+    : "g" (old), "g" (new)
+  );
+}
+
 // t: pointer to the task_union of the process that will be executed
 // metodo para cambiar un proceso
 void task_switch(union task_union*t) {
-  tss.esp0 = &t->stack[KERNEL_STACK_SIZE];
-  set_cr3(t->task.dir_pages_baseAddr);
   __asm__ __volatile__(
 	   "pushl %esi;"
      "pushl %edi;"
