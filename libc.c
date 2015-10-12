@@ -1,5 +1,5 @@
 /*
- * libc.c 
+ * libc.c
  */
 
 #include <libc.h>
@@ -8,10 +8,10 @@
 int errno;
 
 void perrno(int error){
-    
-  switch(errno) {    
+
+  switch(errno) {
       case -14: write(123, "bad address", 3); ; break;
-      case -22: write(123, "invalid arguments", 3); ; break;  
+      case -22: write(123, "invalid arguments", 3); ; break;
   }
 }
 
@@ -19,9 +19,9 @@ void itoa(int a, char *b)
 {
   int i, i1;
   char c;
-  
+
   if (a==0) { b[0]='0'; b[1]=0; return ;}
-  
+
   i=0;
   while (a>0)
   {
@@ -29,7 +29,7 @@ void itoa(int a, char *b)
     a=a/10;
     i++;
   }
-  
+
   for (i1=0; i1<i/2; i1++)
   {
     c=b[i1];
@@ -42,18 +42,18 @@ void itoa(int a, char *b)
 int strlen(char *a)
 {
   int i;
-  
+
   i=0;
-  
+
   while (a[i]!=0) i++;
-  
+
   return i;
 }
 
 int write (int fd, char * buffer, int size){
-  
-   int result = 0; 
-  __asm__ volatile(
+
+   int result = 0;
+  __asm__ __volatile__(
     "int $0x80"
      :"=a" (result)
      : "a"  (4), "b" (fd), "c" (buffer), "d" (size));
@@ -62,15 +62,15 @@ int write (int fd, char * buffer, int size){
     errno = -result;
     result = -1;
   }
-  
+
   return result;
 }
 
 
 int gettime(){
-  
-   int result = 0; 
-  __asm__ volatile(
+
+   int result = 0;
+  __asm__ __volatile__(
     "int $0x80"
     : "=a" (result)
     : "a"  (10));
@@ -80,8 +80,5 @@ int gettime(){
     result = -1;
   }
   return result;
-  
+
 }
-
-
-

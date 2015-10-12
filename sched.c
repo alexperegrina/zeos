@@ -167,3 +167,21 @@ struct task_struct* current()
   );
   return (struct task_struct*)(ret_value&0xfffff000);
 }
+
+// t: pointer to the task_union of the process that will be executed
+// metodo para cambiar un proceso
+void task_switch(union task_union*t) {
+  tss.esp0 = &t->stack[KERNEL_STACK_SIZE];
+  set_cr3(t->task.dir_pages_baseAddr);
+  __asm__ __volatile__(
+	   "pushl %esi;"
+     "pushl %edi;"
+     "pushl %ebx;"
+  );
+	inner_task_switch(t);
+  __asm__ __volatile__(
+	   "popl %esi;"
+	   "popl %edi;"
+	   "popl %ebx;"
+   );
+}
