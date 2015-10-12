@@ -5,6 +5,7 @@
 #include <sched.h>
 #include <mm.h>
 #include <io.h>
+#include <vars_global.h>
 
 /**
  * Container for the Task array and 2 additional pages (the first and the last one)
@@ -24,9 +25,10 @@ struct task_struct *list_head_to_task_struct(struct list_head *l)
 #endif
 
 extern struct list_head blocked;
+
+// Estas variables estan en vars_global
 struct list_head freequeue;
 struct list_head readyqueue;
-
 struct task_struct * idle_task;
 
 
@@ -111,6 +113,35 @@ void init_idle (void)
 
 void init_task1(void)
 {
+  //comprobamos que no este vaci la lista
+  if(!list_empty(&freequeue)) {
+    //cojemos el primer PCB libre para asignarle el idle
+    struct list_head * listHead = list_first(&freequeue);
+
+    //cojemos el container del elemento
+    //struct task_union * realelement = list_entry(listHead, struct task_union, task.list);
+    //V2
+    struct task_struct * taskStruct = list_head_to_task_struct(listHead);
+
+    //eliminamos el elemento de la freequeue ya que no esta libre
+    list_del(listHead);
+
+    //Asignamos el PID 0 al proceso
+    taskStruct->PID = 1;
+
+    //inicializamos la tabla de paginas
+    allocate_DIR(taskStruct);
+
+    //Asigna páginas físicas para sostener el espacio de direcciones del usuario
+    set_user_pages(taskStruct);
+
+    // hacemos que tss.esp0 apunte abajo de la pila
+    tss.esp0 = &taskUnion->stack[KERNEL_STACK_SIZE];
+
+    // Indicamos donde esta la tabla de paginas del proceso y realizamos un flush del TLB
+    set_cr3(taskStruct->page_table_entry);
+
+  }
 }
 
 
@@ -123,7 +154,7 @@ void init_sched(){
   int i = 0;
   for(i = 0; i < NR_TASKS; i++) {
     // encolamos los procesos libres
-    list_add_tail( &(protected_tasks[i].task.list), &freequeue );
+    list_add_tail( &(task[i].task.list), &freequeue );
   }
 }
 
