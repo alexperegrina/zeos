@@ -17,12 +17,12 @@ union task_union protected_tasks[NR_TASKS+2]
 union task_union *task = &protected_tasks[1]; /* == union task_union task[NR_TASKS] */
 
 // ******************************* ESTO PORQUE SI NUNCA ENTRARA
-#if 0
+//#if 0
 struct task_struct *list_head_to_task_struct(struct list_head *l)
 {
   return list_entry( l, struct task_struct, list);
 }
-#endif
+//#endif
 
 extern struct list_head blocked;
 
@@ -87,7 +87,7 @@ void init_idle (void)
     idle_task = taskStruct;
 
     //inicializamos la estructura task_union
-    union task_union * taskUnion = taskStruct;
+    union task_union * taskUnion = (union task_union *)taskStruct;
 
     //inicializamos la tabla de paginas
     allocate_DIR(taskStruct);
@@ -97,18 +97,14 @@ void init_idle (void)
 
     //añadimos en la pila del proceso la direccion de memoria de la funcion
     //que queremos que se ejecute.
-    list_add(&cpu_idle, &(taskUnion->stack));
+    //list_add(&cpu_idle, taskUnion->stack);
+    taskUnion->stack[KERNEL_STACK_SIZE-1] = (long)&cpu_idle;
 
     //añadimos en la pila del proceso el valor 0 (No se para que????)
-    list_add(0, &(taskUnion->stack));
-
-    // Creo que esto hace lo mismo que las 2 lineas anterirores pero de
-    // forma manual
-    //taskUnion->stack[KERNEL_STACK_SIZE-1] = &cpu_idle;
-    //taskUnion->stack[KERNEL_STACK_SIZE-2] = 0;
+    //list_add(0, &(taskUnion->stack));
+    taskUnion->stack[KERNEL_STACK_SIZE-2] = 0;
 
   }
-
 }
 
 void init_task1(void)
@@ -123,6 +119,9 @@ void init_task1(void)
     //V2
     struct task_struct * taskStruct = list_head_to_task_struct(listHead);
 
+    //inicializamos la estructura task_union
+    union task_union * taskUnion = (union task_union *)taskStruct;
+
     //eliminamos el elemento de la freequeue ya que no esta libre
     list_del(listHead);
 
@@ -136,10 +135,10 @@ void init_task1(void)
     set_user_pages(taskStruct);
 
     // hacemos que tss.esp0 apunte abajo de la pila
-    tss.esp0 = &taskUnion->stack[KERNEL_STACK_SIZE];
+    tss.esp0 = (DWord)&(taskUnion->stack[KERNEL_STACK_SIZE]);
 
     // Indicamos donde esta la tabla de paginas del proceso y realizamos un flush del TLB
-    set_cr3(taskStruct->page_table_entry);
+    set_cr3(taskStruct->dir_pages_baseAddr);
 
   }
 }

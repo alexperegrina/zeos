@@ -380,7 +380,7 @@ sectors:
 
 msg1:
 	.byte 13,10
-	.ascii "cagando.."
+	.ascii "Loading.."
 
 .org 435
 gdt:		
