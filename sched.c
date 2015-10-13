@@ -177,14 +177,14 @@ void inner_task_switch(union task_union*t){
   struct task_struct *taskCurrent = current();
   //void * old = PH_PAGE(*(int*)(void *)(&taskCurrent));
   //void * new = PH_PAGE((int)&(t->task)); // cojemos la posicion incial del task_union
-  void * old = &taskCurrent->ebp;
-  void * new = &t->task;
+  void * old = &taskCurrent->kernel_esp;
+  void * new = &t->task.kernel_esp;
 
   __asm__ __volatile__(
-    "movl %%ebp,%0;"
-    "movl %1,%%esp;"
-    "popl %%ebp;"
-    "ret;"
+    "movl %%ebp,%0;" //guardamos el valor de ebp en la estructura
+    "movl %1,%%esp;" //cojemos el nuevo esp del proceso nuevo
+    "popl %%ebp;" //desenpilamos ebp para poder hacer la llamada de retorno
+    "ret;" //volvemos a la funcion desde donde nos han llamado
     :
     : "g" (old), "g" (new)
   );

@@ -41,7 +41,7 @@
 00000000000i[DEV   ] PIIX3 PCI-to-ISA bridge present at device 1, function 0
 00000000000i[PLUGIN] init_dev of 'cmos' plugin device by virtual method
 00000000000i[CMOS  ] Using local time for initial clock
-00000000000i[CMOS  ] Setting initial clock to: Tue Oct 13 15:19:37 2015 (time0=1444742377)
+00000000000i[CMOS  ] Setting initial clock to: Tue Oct 13 21:56:25 2015 (time0=1444766185)
 00000000000i[PLUGIN] init_dev of 'dma' plugin device by virtual method
 00000000000i[DMA   ] channel 4 used by cascade
 00000000000i[PLUGIN] init_dev of 'pic' plugin device by virtual method
@@ -168,7 +168,7 @@
 00001398970i[BIOS  ] Firmware waking vector 0xff00cc
 00001400765i[PCI   ] i440FX PMC write to PAM register 59 (TLB Flush)
 00001401488i[BIOS  ] bios_table_cur_addr: 0x000fa6c4
-00002439984i[XGUI  ] charmap update. Font Height is 16
+00002787108i[XGUI  ] charmap update. Font Height is 16
 00029625338i[BIOS  ] Booting from 0000:7c00
 00045296402i[FLOPPY] partial read() on floppy image returns 414/512
 00045340846i[FLOPPY] read() on floppy image returns 0
@@ -202,26 +202,44 @@
 00046587633i[FLOPPY] read() on floppy image returns 0
 00046632077i[FLOPPY] read() on floppy image returns 0
 00046676521i[FLOPPY] read() on floppy image returns 0
-00703397647i[      ] Ctrl-C detected in signal handler.
-00703397648i[XGUI  ] Mouse capture off
-00703397648i[      ] dbg: Quit
-00703397648i[CPU0  ] CPU is in protected mode (active)
-00703397648i[CPU0  ] CS.mode = 32 bit
-00703397648i[CPU0  ] SS.mode = 32 bit
-00703397648i[CPU0  ] EFER   = 0x00000000
-00703397648i[CPU0  ] | EAX=0011bffc  EBX=0000350e  ECX=0000022e  EDX=00007dfa
-00703397648i[CPU0  ] | ESP=0011bfec  EBP=0011bfec  ESI=000e0200  EDI=00003ff4
-00703397648i[CPU0  ] | IOPL=0 id vip vif ac vm rf nt of df IF tf sf zf af PF cf
-00703397648i[CPU0  ] | SEG sltr(index|ti|rpl)     base    limit G D
-00703397648i[CPU0  ] |  CS:0023( 0004| 0|  3) 00000000 ffffffff 1 1
-00703397648i[CPU0  ] |  DS:002b( 0005| 0|  3) 00000000 ffffffff 1 1
-00703397648i[CPU0  ] |  SS:002b( 0005| 0|  3) 00000000 ffffffff 1 1
-00703397648i[CPU0  ] |  ES:002b( 0005| 0|  3) 00000000 ffffffff 1 1
-00703397648i[CPU0  ] |  FS:0000( 0000| 0|  0) 00000000 00000000 0 0
-00703397648i[CPU0  ] |  GS:0000( 0000| 0|  0) 00000000 00000000 0 0
-00703397648i[CPU0  ] | EIP=00100003 (00100003)
-00703397648i[CPU0  ] | CR0=0x80000011 CR2=0x00000000
-00703397648i[CPU0  ] | CR3=0x0002b000 CR4=0x00000000
-00703397648i[CMOS  ] Last time is 1444742552 (Tue Oct 13 15:22:32 2015)
-00703397648i[XGUI  ] Exit
-00703397648i[SIM   ] quit_sim called with exit code 0
+00593804000e[XGUI  ] xkeypress(): keysym fe50 unhandled!
+00604384000e[XGUI  ] xkeypress(): keysym fe50 unhandled!
+00632676000e[XGUI  ] xkeypress(): keysym fe51 unhandled!
+00641380000e[XGUI  ] xkeypress(): keysym fe51 unhandled!
+00654092000e[XGUI  ] xkeypress(): keysym fe51 unhandled!
+00661944000e[XGUI  ] xkeypress(): keysym fe51 unhandled!
+00669360000e[XGUI  ] xkeypress(): keysym fe51 unhandled!
+00679076000e[XGUI  ] xkeypress(): keysym fe51 unhandled!
+00728552000e[XGUI  ] xkeypress(): keysym e7 unhandled!
+00737084000e[XGUI  ] xkeypress(): keysym e7 unhandled!
+00743700000e[XGUI  ] xkeypress(): keysym e7 unhandled!
+00748568000e[XGUI  ] xkeypress(): keysym e7 unhandled!
+00755184000e[XGUI  ] xkeypress(): keysym e7 unhandled!
+00762900000e[XGUI  ] xkeypress(): keysym e7 unhandled!
+01576475128i[      ] Ctrl-C detected in signal handler.
+01576475129i[XGUI  ] Mouse capture off
+01781932562i[      ] Ctrl-C detected in signal handler.
+01781932563i[XGUI  ] Mouse capture off
+01843073112i[      ] Ctrl-C detected in signal handler.
+01843073113i[XGUI  ] Mouse capture off
+01843073113i[      ] dbg: Quit
+01843073113i[CPU0  ] CPU is in protected mode (active)
+01843073113i[CPU0  ] CS.mode = 32 bit
+01843073113i[CPU0  ] SS.mode = 32 bit
+01843073113i[CPU0  ] EFER   = 0x00000000
+01843073113i[CPU0  ] | EAX=0011bffc  EBX=0000350e  ECX=0000022e  EDX=00007dfa
+01843073113i[CPU0  ] | ESP=0011bfec  EBP=0011bfec  ESI=000e0200  EDI=00003ff4
+01843073113i[CPU0  ] | IOPL=0 id vip vif ac vm rf nt of df IF tf sf zf af PF cf
+01843073113i[CPU0  ] | SEG sltr(index|ti|rpl)     base    limit G D
+01843073113i[CPU0  ] |  CS:0023( 0004| 0|  3) 00000000 ffffffff 1 1
+01843073113i[CPU0  ] |  DS:002b( 0005| 0|  3) 00000000 ffffffff 1 1
+01843073113i[CPU0  ] |  SS:002b( 0005| 0|  3) 00000000 ffffffff 1 1
+01843073113i[CPU0  ] |  ES:002b( 0005| 0|  3) 00000000 ffffffff 1 1
+01843073113i[CPU0  ] |  FS:0000( 0000| 0|  0) 00000000 00000000 0 0
+01843073113i[CPU0  ] |  GS:0000( 0000| 0|  0) 00000000 00000000 0 0
+01843073113i[CPU0  ] | EIP=00100003 (00100003)
+01843073113i[CPU0  ] | CR0=0x80000011 CR2=0x00000000
+01843073113i[CPU0  ] | CR3=0x0002b000 CR4=0x00000000
+01843073113i[CMOS  ] Last time is 1444766645 (Tue Oct 13 22:04:05 2015)
+01843073113i[XGUI  ] Exit
+01843073113i[SIM   ] quit_sim called with exit code 0

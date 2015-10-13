@@ -45,37 +45,33 @@ void sys_exit()
 {
 }
 
-int sys_write(int fd, char * buffer, int size){
-
+int sys_write(int fd, char * buffer, int size) {
   int error = check_fd(fd, ESCRIPTURA);
   char new_buffer[1024];
 
   if(error == 0){
-	  if(buffer == NULL)  return EFAULT;  //bad address
-	  if( size > -1){
-	      if(size > 0 ){
-		  if(size > 1024){
-
-		    while(size > 0){
-		      int i = 0;
-		      copy_from_user(buffer[i], new_buffer, 1024);
-		      error = sys_write_console(new_buffer, 1024);
-		      size = size - 1024;
-		      i = i + 1024;
-		      if(error > 0) error = error + 1024;
-		      else return EINVAL;
-		    }
-
-		  }
-		  else{
-
-		    copy_from_user(buffer, new_buffer, 1024);
-		    error = sys_write_console(new_buffer, 1024);
-
-		  }
-	      }
-	  }
-	  else return EINVAL; //invalid argument
+    if(buffer == NULL)  return EFAULT;  //bad address
+    if( size > -1){
+      if(size > 0 ){
+        if(size > 1024){
+          while(size > 0){
+            int i = 0;
+            //igualamos a error para quitar un warning en la compilacion.
+            error = copy_from_user(&buffer[i], &new_buffer, 1024);
+            error = sys_write_console(new_buffer, 1024);
+            size = size - 1024;
+            i = i + 1024;
+            if(error > 0) error = error + 1024;
+            else return EINVAL;
+          }
+        }
+        else{
+          copy_from_user(buffer, new_buffer, 1024);
+          error = sys_write_console(new_buffer, 1024);
+        }
+      }
+    }
+    else return EINVAL; //invalid argument
   }
   return error;
 }
