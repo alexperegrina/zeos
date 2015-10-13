@@ -7,7 +7,7 @@
 #include <segment.h>
 #include <hardware.h>
 #include <sched.h>
-#include <vars_global.h>
+//#include <vars_global.h>
 
 Byte phys_mem[TOTAL_PAGES];
 

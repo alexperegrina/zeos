@@ -99,7 +99,7 @@ void init_idle (void)
     //añadimos en la pila del proceso la direccion de memoria de la funcion
     //que queremos que se ejecute.
     //list_add(&cpu_idle, taskUnion->stack);
-    taskUnion->stack[KERNEL_STACK_SIZE-1] = (long)&cpu_idle;
+    taskUnion->stack[KERNEL_STACK_SIZE-1] = (unsigned long)&cpu_idle;
 
     //añadimos en la pila del proceso el valor 0 (No se para que????)
     //list_add(0, &(taskUnion->stack));
@@ -175,9 +175,10 @@ void inner_task_switch(union task_union*t){
   set_cr3(t->task.dir_pages_baseAddr);
 
   struct task_struct *taskCurrent = current();
-  //void * old = PH_PAGE(((int) &taskCurrent));
-  void * old = PH_PAGE(*(int*)(void *)(&taskCurrent));
-  void * new = PH_PAGE((int)&(t->task)); // cojemos la posicion incial del task_union
+  //void * old = PH_PAGE(*(int*)(void *)(&taskCurrent));
+  //void * new = PH_PAGE((int)&(t->task)); // cojemos la posicion incial del task_union
+  void * old = &taskCurrent->ebp;
+  void * new = &t->task;
 
   __asm__ __volatile__(
     "movl %%ebp,%0;"

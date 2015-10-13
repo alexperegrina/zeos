@@ -51,7 +51,7 @@
       movl $__KERNEL_DS, %edx;    \
       movl %edx, %ds;           \
       movl %edx, %es;
-      
+
 #define RESTORE_ALL \
       popl  %ebx; \
       popl  %ecx; \
@@ -63,9 +63,9 @@
       popl  %ds; \
       popl  %es; \
       popl  %fs; \
-      popl  %gs; 
-      
-      
+      popl  %gs;
+
+
 #define EOI \
 movb $0x20, %al ; \
 outb %al, $0x20 ;
@@ -77,20 +77,20 @@ outb %al, $0x20 ;
       call keyboard_routine
       RESTORE_ALL
       iret
-  
+
   ENTRY(system_call_handler)
-      SAVE_ALL 
-      cmpl $0, %eax 
-      jl err 
-      cmpl $MAX_SYSCALL, %eax 
-      jg err  
-      call *sys_call_table(, %eax, 0x04)  
-      jmp fin 
+      SAVE_ALL
+      cmpl $0, %eax
+      jl err
+      cmpl $MAX_SYSCALL, %eax
+      jg err
+      call *sys_call_table(, %eax, 0x04)
+      jmp fin
   err:
-      movl $-ENOSYS, %eax 
+      movl $-ENOSYS, %eax
   fin:
-      movl %eax, 0x18(%esp) 
-      RESTORE_ALL 
+      movl %eax, 0x18(%esp)
+      RESTORE_ALL
       iret
 
   ENTRY(clock_handler)
@@ -99,9 +99,3 @@ outb %al, $0x20 ;
       call clock_routine
       RESTORE_ALL
       iret
- 
-
-
-
-
-

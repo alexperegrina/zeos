@@ -4,7 +4,7 @@
 #include <types.h>
 #include <vars_global.h>
 #include <interrupt.h>
-#include <segment.h> 
+#include <segment.h>
 #include <hardware.h>
 #include <io.h>
 #include <entry.h>
@@ -16,11 +16,11 @@ Register    idtR;
 char char_map[] =
 {
   '\0','\0','1','2','3','4','5','6',
-  '7','8','9','0','\'','¡','\0','\0',
+  '7','8','9','0','\'','ï¿½','\0','\0',
   'q','w','e','r','t','y','u','i',
   'o','p','`','+','\0','\0','a','s',
-  'd','f','g','h','j','k','l','ñ',
-  '\0','º','\0','ç','z','x','c','v',
+  'd','f','g','h','j','k','l','ï¿½',
+  '\0','ï¿½','\0','ï¿½','z','x','c','v',
   'b','n','m',',','.','-','\0','*',
   '\0','\0','\0','\0','\0','\0','\0','\0',
   '\0','\0','\0','\0','\0','\0','\0','7',
@@ -82,11 +82,11 @@ void setIdt()
   /* Program interrups/exception service routines */
   idtR.base  = (DWord)idt;
   idtR.limit = IDT_ENTRIES * sizeof(Gate) - 1;
-  
+
   set_handlers();
 
   /* ADD INITIALIZATION CODE FOR INTERRUPT VECTOR */
-  
+
   setInterruptHandler(33, keyboard_handler , 0);
   setInterruptHandler(32, clock_handler , 0);
   setTrapHandler(0x80, system_call_handler ,3);
@@ -95,26 +95,17 @@ void setIdt()
 }
 
 void keyboard_routine(){
-  
   char key_pressed = inb(0X60);
-  
+
   if(! (key_pressed & 0x80)) {
-	char aux = char_map[key_pressed&0x7f];
-	if(aux == '\0') aux = 'C';
-	printc_xy(20, 20, aux);    
+  	char aux = char_map[key_pressed&0x7f];
+  	if(aux == '\0') aux = 'C';
+  	printc_xy(20, 20, aux);
   }
-  
 }
 
 
 void clock_routine(){
-  
   zeos_show_clock();
-  zeos_ticks ++; 
-  
+  zeos_ticks ++;
 }
-
-
-
-
-
