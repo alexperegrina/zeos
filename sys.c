@@ -160,9 +160,27 @@ int sys_fork()
   return PID;
 }
 
-void sys_exit()
-{
+void sys_exit() {
+  int i;
+  struct task_struct * taskStruct_current= current();
+  //  ************************* Inicializar espacio de direcciones
+  page_table_entry* table_current = get_PT((void*)&taskStruct_current);
+  for(i = 0; i < NUM_PAG_DATA; i++) {
+    //Marcamos como libre el frame seleccionado
+    free_frame(get_frame(table_current, PAG_LOG_INIT_DATA+i));
+    //Eliminamos asociacion del frame con el proceso actual
+    del_ss_pag(table_current, PAG_LOG_INIT_DATA+i);
+  }
+
+  /* Añadimos el task_struct a la cola freequeue*/
+  list_add_tail(&(current()->list), &freequeue);
+
+  current()->PID=-1;
+
+  // hacemos que entre un nuevo proceso en RUN
+  sched_next_rr();
 }
+
 
 int sys_write(int fd, char * buffer, int size) {
   int error = check_fd(fd, ESCRIPTURA);

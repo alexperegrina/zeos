@@ -111,3 +111,19 @@ int fork() {
   }
   return result;
 }
+
+void exit() {
+  //int result = 0;
+  __asm__ __volatile__(
+    "int $0x80"
+    //: "=a" (result)
+    :
+    : "a" (1)
+  );
+
+  /*if(result < 0) {
+    errno = -result;
+    result = -1;
+  }
+  return result;*/
+}
