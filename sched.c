@@ -18,6 +18,7 @@ struct list_head readyqueue;
 struct task_struct * idle_task;
 
 int nextPID = 2;
+int quantumCPU;
 
 /**
  * Container for the Task array and 2 additional pages (the first and the last one)
@@ -93,6 +94,11 @@ void init_idle (void)
 
   //Asignamos el PID 0 al proceso
   taskStruct->PID = 0;
+  //indicamos el valor del quantum
+  taskStruct->quantum = DEFAULT_QUANTUM;
+  //inicializamos el quantum de la CPU para el proceso init
+  quantumCPU = taskStruct->quantum;
+
   //inicializamos la variable global para acceder de una forma facil al idle
   idle_task = taskStruct;
 
@@ -127,8 +133,6 @@ void init_task1(void)
   struct list_head * listHead = list_first(&freequeue);
 
   //cojemos el container del elemento
-  //struct task_union * realelement = list_entry(listHead, struct task_union, task.list);
-  //V2
   struct task_struct * taskStruct = list_head_to_task_struct(listHead);
 
   //inicializamos la estructura task_union
@@ -142,6 +146,10 @@ void init_task1(void)
 
   //Asignamos el PID 1 al proceso
   taskStruct->PID = 1;
+  //indicamos el valor del quantum
+  taskStruct->quantum = DEFAULT_QUANTUM;
+  //inicializamos el quantum de la CPU para el proceso init
+  quantumCPU = taskStruct->quantum;
 
   //inicializamos la tabla de paginas
   allocate_DIR(taskStruct);
@@ -157,18 +165,32 @@ void init_task1(void)
 
 }
 
-
-void init_sched(){
+void init_freequeue(void) {
   //inicializamos freequeue
   INIT_LIST_HEAD(&freequeue);
-  //inicializamos readyqueue
-  INIT_LIST_HEAD(&readyqueue);
-
   int i = 0;
   for(i = 0; i < NR_TASKS; i++) {
     // encolamos los procesos libres
     list_add_tail( &(task[i].task.list), &freequeue );
   }
+}
+
+void init_sched(){
+  //inicializamos freequeue
+  init_freequeue();
+  //INIT_LIST_HEAD(&freequeue);
+
+  //inicializamos readyqueue
+  INIT_LIST_HEAD(&readyqueue);
+
+  /*int i = 0;
+  for(i = 0; i < NR_TASKS; i++) {
+    // encolamos los procesos libres
+    list_add_tail( &(task[i].task.list), &freequeue );
+  }*/
+
+  //inicializamos el quantum para el proceso init
+  //quantumCPU = DEFAULT_QUANTUM;
 }
 
 struct task_struct* current()
@@ -217,4 +239,105 @@ void task_switch(union task_union*t) {
 	   "popl %edi;"
 	   "popl %ebx;"
    );
+}
+
+/*Funcion para ir modificando la informacion del quantum que lleva procesado la CPU*/
+void update_sched_data_rr(void) {
+  quantumCPU--;
+}
+
+/*
+Funcion para decidir si es necesario el cambio del proceso actual
+post: 1 --> es necesario cambio de proceso,
+      0 --> no es necesario cambio de proceso
+*/
+int needs_sched_rr(void) {
+  /*casos a contemplar para el cambio de proceso:
+  1_ El quantum del proceso esta a 0
+  2_ Proceso de E/S --> Sale solo del proceso (politica no apropiativa)
+  */
+  return quantumCPU == 0;
+
+  /************************ PREGUNTAR PROFE ***********************/
+  /*El codigo del profe tiene mas logica*/
+  /* Porque debemos controlar desde aqui si es el unico proceso para procesar?
+  si se hace de la manera que yo propongo no saldra de la CPU y volvera a
+  entrar entiendo que sera un overhead por realizar el cambio*/
+
+  /*if((quantumCPU == 0) && (!list_empty(&readyqueue))) return 1;
+  if(quantumCPU == 0) quantumCPU = get_quantum(current());
+  return 0;*/
+}
+
+/*
+Función para actualizar el estado de un proceso. Si el estado actual del proceso
+no se está ejecutando, entonces esta función elimina el proceso de su cola actual.
+Si el nuevo estado del proceso no se está ejecutando, entonces esta función
+inserta el proceso en una cola adecuada (por ejemplo, la cola libre o la cola
+de listos). Los parámetros de esta función son el task_struct del proceso y la
+cola de acuerdo con el nuevo estado del proceso. Si el nuevo estado del proceso
+se está ejecutando, el parámetro cola shoud ser NULL.
+*/
+void update_process_state_rr(struct task_struct *t, struct list_head *dst_queue) {
+  if(t->actualState != ST_RUN) list_del(&(t->list));
+  if(dst_queue == NULL) t->actualState = ST_RUN;
+  else {
+    list_add_tail(&t->list, dst_queue);
+    if(dst_queue == &readyqueue) {
+      t->actualState = ST_READY;
+    }
+    else {
+      t->actualState = ST_BLOCKED;
+    }
+  }
+}
+
+/*Funcion que selecciona el siguiente proceso a ejecutar, se extrae de
+la cola readyqueue*/
+void sched_next_rr(void) {
+  struct task_struct *newTask;
+
+  if(list_empty(&readyqueue)) {
+    newTask = idle_task;
+  }
+  else {
+    //cojemos el primer proceso para ejecutar
+    struct list_head * listHead = list_first(&readyqueue);
+
+    //cojemos el container del elemento
+    newTask = list_head_to_task_struct(listHead);
+
+    //inicializamos la estructura task_union
+    //union task_union * taskUnion = (union task_union *)taskStruct;
+
+    //eliminamos el elemento de la readyqueue ya que se va ha ejecutar
+    list_del(listHead);
+  }
+
+  //actualizamos el quantum de la CPU
+  quantumCPU = get_quantum(newTask);
+
+  //cambiamos el estado del proceso
+  newTask->actualState = ST_RUN;
+
+  //cambiamos al nuevo proceso
+  task_switch((union task_union*)newTask);
+}
+
+int get_quantum(struct task_struct *t) {
+  return t->quantum;
+}
+
+void set_quantum(struct task_struct *t, int new_quantum) {
+  t->quantum = new_quantum;
+}
+
+void schedule()
+{
+  update_sched_data_rr();
+  if (needs_sched_rr())
+  {
+    update_process_state_rr(current(), &readyqueue);
+    sched_next_rr();
+  }
 }
