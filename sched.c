@@ -8,6 +8,17 @@
 #include <vars_global.h>
 #include <mm_address.h>
 
+
+
+extern struct list_head blocked;
+
+// Estas variables estan en vars_global
+struct list_head freequeue;
+struct list_head readyqueue;
+struct task_struct * idle_task;
+
+int nextPID = 2;
+
 /**
  * Container for the Task array and 2 additional pages (the first and the last one)
  * to protect against out of bound accesses.
@@ -24,14 +35,6 @@ struct task_struct *list_head_to_task_struct(struct list_head *l)
   return list_entry( l, struct task_struct, list);
 }
 //#endif
-
-extern struct list_head blocked;
-
-// Estas variables estan en vars_global
-struct list_head freequeue;
-struct list_head readyqueue;
-struct task_struct * idle_task;
-
 
 /* get_DIR - Returns the Page Directory address for task 't' */
 page_table_entry * get_DIR (struct task_struct *t)
@@ -70,78 +73,88 @@ void cpu_idle(void)
 void init_idle (void)
 {
   //comprobamos que no este vaci la lista
-  if(!list_empty(&freequeue)) {
-    //cojemos el primer PCB libre para asignarle el idle
-    struct list_head * listHead = list_first(&freequeue);
+  /*if (list_empty(&freequeue)){
+	   return -EPERM;
+  }*/
 
-    //cojemos el container del elemento
-    //struct task_union * realelement = list_entry(listHead, struct task_union, task.list);
-    //V2
-    struct task_struct * taskStruct = list_head_to_task_struct(listHead);
+  //cojemos el primer PCB libre para asignarle el idle
+  struct list_head * listHead = list_first(&freequeue);
 
-    //eliminamos el elemento de la freequeue ya que no esta libre
-    list_del(listHead);
+  //cojemos el container del elemento
+  //struct task_union * realelement = list_entry(listHead, struct task_union, task.list);
+  //V2
+  struct task_struct * taskStruct = list_head_to_task_struct(listHead);
 
-    //Asignamos el PID 0 al proceso
-    taskStruct->PID = 0;
-    //inicializamos la variable global para acceder de una forma facil al idle
-    idle_task = taskStruct;
+  //eliminamos el elemento de la freequeue ya que no esta libre
+  list_del(listHead);
 
-    //inicializamos la estructura task_union
-    union task_union * taskUnion = (union task_union *)taskStruct;
+  //añadimo el proceso en la cola de ready
+  //list_add_tail( &(listHead.task.list), &readyqueue );
 
-    //inicializamos la tabla de paginas
-    allocate_DIR(taskStruct);
+  //Asignamos el PID 0 al proceso
+  taskStruct->PID = 0;
+  //inicializamos la variable global para acceder de una forma facil al idle
+  idle_task = taskStruct;
+
+  //inicializamos la estructura task_union
+  union task_union * taskUnion = (union task_union *)taskStruct;
+
+  //inicializamos la tabla de paginas
+  allocate_DIR(taskStruct);
 
 
-    /* INICIALIZAMOS EL CONTEXTO DE EJECUCION */
+  /* INICIALIZAMOS EL CONTEXTO DE EJECUCION */
 
-    //añadimos en la pila del proceso la direccion de memoria de la funcion
-    //que queremos que se ejecute.
-    //list_add(&cpu_idle, taskUnion->stack);
-    taskUnion->stack[KERNEL_STACK_SIZE-1] = (unsigned long)&cpu_idle;
+  //añadimos en la pila del proceso la direccion de memoria de la funcion
+  //que queremos que se ejecute.
+  //list_add(&cpu_idle, taskUnion->stack);
+  taskUnion->stack[KERNEL_STACK_SIZE-1] = (unsigned long)&cpu_idle;
 
-    //añadimos en la pila del proceso el valor 0 (No se para que????)
-    //list_add(0, &(taskUnion->stack));
-    taskUnion->stack[KERNEL_STACK_SIZE-2] = 0;
+  //añadimos en la pila del proceso el valor 0 (No se para que????)
+  //list_add(0, &(taskUnion->stack));
+  taskUnion->stack[KERNEL_STACK_SIZE-2] = 0;
 
-  }
 }
 
 void init_task1(void)
 {
-  //comprobamos que no este vaci la lista
-  if(!list_empty(&freequeue)) {
-    //cojemos el primer PCB libre para asignarle el idle
-    struct list_head * listHead = list_first(&freequeue);
+  //comprobamos que no este vacia la lista
+  /*if (list_empty(&freequeue)){
+	   return -EPERM;
+  }*/
 
-    //cojemos el container del elemento
-    //struct task_union * realelement = list_entry(listHead, struct task_union, task.list);
-    //V2
-    struct task_struct * taskStruct = list_head_to_task_struct(listHead);
+  //cojemos el primer PCB libre para asignarle el idle
+  struct list_head * listHead = list_first(&freequeue);
 
-    //inicializamos la estructura task_union
-    union task_union * taskUnion = (union task_union *)taskStruct;
+  //cojemos el container del elemento
+  //struct task_union * realelement = list_entry(listHead, struct task_union, task.list);
+  //V2
+  struct task_struct * taskStruct = list_head_to_task_struct(listHead);
 
-    //eliminamos el elemento de la freequeue ya que no esta libre
-    list_del(listHead);
+  //inicializamos la estructura task_union
+  union task_union * taskUnion = (union task_union *)taskStruct;
 
-    //Asignamos el PID 0 al proceso
-    taskStruct->PID = 1;
+  //eliminamos el elemento de la freequeue ya que no esta libre
+  list_del(listHead);
 
-    //inicializamos la tabla de paginas
-    allocate_DIR(taskStruct);
+  //añadimo el proceso en la cola de ready
+  //list_add_tail( &(listHead.task.list), &readyqueue );
 
-    //Asigna páginas físicas para sostener el espacio de direcciones del usuario
-    set_user_pages(taskStruct);
+  //Asignamos el PID 1 al proceso
+  taskStruct->PID = 1;
 
-    // hacemos que tss.esp0 apunte abajo de la pila
-    tss.esp0 = (DWord)&(taskUnion->stack[KERNEL_STACK_SIZE]);
+  //inicializamos la tabla de paginas
+  allocate_DIR(taskStruct);
 
-    // Indicamos donde esta la tabla de paginas del proceso y realizamos un flush del TLB
-    set_cr3(taskStruct->dir_pages_baseAddr);
+  //Asigna páginas físicas para sostener el espacio de direcciones del usuario
+  set_user_pages(taskStruct);
 
-  }
+  // hacemos que tss.esp0 apunte abajo de la pila
+  tss.esp0 = (DWord)&(taskUnion->stack[KERNEL_STACK_SIZE]);
+
+  // Indicamos donde esta la tabla de paginas del proceso y realizamos un flush del TLB
+  set_cr3(taskStruct->dir_pages_baseAddr);
+
 }
 
 
@@ -183,7 +196,7 @@ void inner_task_switch(union task_union*t){
   __asm__ __volatile__(
     "movl %%ebp,%0;" //guardamos el valor de ebp en la estructura
     "movl %1,%%esp;" //cojemos el nuevo esp del proceso nuevo
-    "popl %%ebp;" //desenpilamos ebp para poder hacer la llamada de retorno
+    "popl %%ebp;" //desempilamos ebp para poder hacer la llamada de retorno
     "ret;" //volvemos a la funcion desde donde nos han llamado
     :
     : "g" (old), "g" (new)

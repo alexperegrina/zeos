@@ -96,3 +96,7 @@ int getpid(void) {
   }
   return result;
 }
+
+/*int fork() {
+
+}*/
