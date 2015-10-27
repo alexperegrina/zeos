@@ -153,6 +153,17 @@ int sys_fork()
   // cima de la pila
   taskStruct_new->kernel_esp = (unsigned long)&taskUnion_new->stack[KERNEL_STACK_SIZE-19];
 
+  //inicializamos los estado
+  taskUnion_new->task.stats.user_ticks = 0;
+  taskUnion_new->task.stats.system_ticks = 0;
+  taskUnion_new->task.stats.blocked_ticks = 0;
+  taskUnion_new->task.stats.ready_ticks = 0;
+  taskUnion_new->task.stats.elapsed_total_ticks = get_ticks();
+  taskUnion_new->task.stats.total_trans = 0;
+  taskUnion_new->task.stats.remaining_ticks = 0;
+  taskUnion_new->task.actualState = ST_READY;
+
+
   //  ************************* Encolar PCB en la cola de ready
   //añadimo el proceso en la cola de ready
   list_add_tail( &(taskStruct_new->list), &readyqueue );
@@ -163,7 +174,6 @@ int sys_fork()
 void sys_exit() {
   int i;
   struct task_struct * taskStruct_current= current();
-  //  ************************* Inicializar espacio de direcciones
   page_table_entry* table_current = get_PT((void*)&taskStruct_current);
   for(i = 0; i < NUM_PAG_DATA; i++) {
     //Marcamos como libre el frame seleccionado
@@ -215,4 +225,41 @@ int sys_write(int fd, char * buffer, int size) {
 
 int sys_gettime() {
 	return zeos_ticks;
+}
+
+/*
+void update_statistics_user(struct task_struct *task) {
+  task->stats.user_ticks += get_ticks() - task->stats.elapsed_total_ticks;
+  task->stats.elapsed_total_ticks = get_ticks();
+}
+
+void update_statistics_system(struct task_struct *task) {
+  task->stats.system_ticks += get_ticks() - task->stats.elapsed_total_ticks;
+  task->stats.elapsed_total_ticks = get_ticks();
+}
+
+void update_statistics_ready(struct task_struct *task) {
+  task->stats.ready_ticks += get_ticks() - task->stats.elapsed_total_ticks;
+  task->stats.elapsed_total_ticks = get_ticks();
+}
+*/
+/**
+Funcion para modificar las estadisticas del proceso
+pre: task, task_struck; opt: si 0 == user_ticks, si 1 == system_ticks, si 2 == ready_ticks
+**/
+void update_statistics(struct task_struct *task, int opt) {
+  unsigned long *increment;
+  switch (opt) {
+    case 0:
+      increment = &task->stats.user_ticks;
+      break;
+    case 1:
+      increment = &task->stats.system_ticks;
+      break;
+    case 2:
+      increment = &task->stats.ready_ticks;
+      break;
+  }
+  increment += get_ticks() - task->stats.elapsed_total_ticks;
+  task->stats.elapsed_total_ticks = get_ticks();
 }

@@ -120,6 +120,16 @@ void init_idle (void)
   //list_add(0, &(taskUnion->stack));
   taskUnion->stack[KERNEL_STACK_SIZE-2] = 0;
 
+  //inicializamos los estado
+  taskUnion->task.stats.user_ticks = 0;
+  taskUnion->task.stats.system_ticks = 0;
+  taskUnion->task.stats.blocked_ticks = 0;
+  taskUnion->task.stats.ready_ticks = 0;
+  taskUnion->task.stats.elapsed_total_ticks = get_ticks();
+  taskUnion->task.stats.total_trans = 0;
+  taskUnion->task.stats.remaining_ticks = 0;
+  taskUnion->task.actualState = ST_READY;
+
 }
 
 void init_task1(void)
@@ -163,6 +173,15 @@ void init_task1(void)
   // Indicamos donde esta la tabla de paginas del proceso y realizamos un flush del TLB
   set_cr3(taskStruct->dir_pages_baseAddr);
 
+  //inicializamos los estado
+  taskUnion->task.stats.user_ticks = 0;
+  taskUnion->task.stats.system_ticks = 0;
+  taskUnion->task.stats.blocked_ticks = 0;
+  taskUnion->task.stats.ready_ticks = 0;
+  taskUnion->task.stats.elapsed_total_ticks = get_ticks();
+  taskUnion->task.stats.total_trans = 0;
+  taskUnion->task.stats.remaining_ticks = 0;
+  taskUnion->task.actualState = ST_READY;
 }
 
 void init_freequeue(void) {
@@ -284,6 +303,8 @@ void update_process_state_rr(struct task_struct *t, struct list_head *dst_queue)
   else {
     list_add_tail(&t->list, dst_queue);
     if(dst_queue == &readyqueue) {
+      // caso 'c' del documento
+      update_statistics(t, 1);
       t->actualState = ST_READY;
     }
     else {
@@ -317,6 +338,12 @@ void sched_next_rr(void) {
   //actualizamos el quantum de la CPU
   quantumCPU = get_quantum(newTask);
 
+  // Estado 'd' del documento estadisticas de proceso
+  update_statistics(newTask,2);
+
+  // Estado 'b' del documento estadisticas de proceso
+  update_statistics(current(),1);
+
   //cambiamos el estado del proceso
   newTask->actualState = ST_RUN;
 
@@ -341,3 +368,24 @@ void schedule()
     sched_next_rr();
   }
 }
+
+/**
+Funcion para modificar las estadisticas del proceso
+pre: task, task_struck; opt: si 0 == user_ticks, si 1 == system_ticks, si 2 == ready_ticks
+**/
+/*void update_statistics(struct task_struct *task, int opt) {
+  int *increment;
+  switch (opt) {
+    case 0:
+      increment = &task->stats.user_ticks;
+      break;
+    case 1:
+      increment = &task->stats.system_ticks;
+      break;
+    case 2:
+      increment = &task->stats.ready_ticks;
+      break;
+  }
+  increment += get_ticks() - task->stats.elapsed_total_ticks;
+  task->stats.elapsed_total_ticks = get_ticks();
+}*/
