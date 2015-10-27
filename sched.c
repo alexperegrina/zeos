@@ -18,7 +18,7 @@ struct list_head readyqueue;
 struct task_struct * idle_task;
 
 int nextPID = 2;
-int quantumCPU;
+int quantumCPU = 0;
 
 /**
  * Container for the Task array and 2 additional pages (the first and the last one)

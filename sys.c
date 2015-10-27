@@ -263,3 +263,24 @@ void update_statistics(struct task_struct *task, int opt) {
   increment += get_ticks() - task->stats.elapsed_total_ticks;
   task->stats.elapsed_total_ticks = get_ticks();
 }
+
+extern int quantumCPU;
+
+int sys_get_stats(int pid, struct stats *st)
+{
+  int i;
+
+  if (!access_ok(VERIFY_WRITE, st, sizeof(struct stats))) return -EFAULT;
+
+  if (pid<0) return -EINVAL;
+  for (i=0; i<NR_TASKS; i++)
+  {
+    if (task[i].task.PID==pid)
+    {
+      task[i].task.stats.remaining_ticks=quantumCPU;
+      copy_to_user(&(task[i].task.stats), st, sizeof(struct stats));
+      return 0;
+    }
+  }
+  return -ESRCH; /*ESRCH */
+}
