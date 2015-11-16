@@ -7,6 +7,7 @@
 #include <io.h>
 #include <vars_global.h>
 #include <mm_address.h>
+#include <utils.h>
 
 
 
@@ -33,7 +34,9 @@ union task_union *task = &protected_tasks[1]; /* == union task_union task[NR_TAS
 //#if 0
 struct task_struct *list_head_to_task_struct(struct list_head *l)
 {
-  return list_entry( l, struct task_struct, list);
+  //return (struct task_struct*)((int)l & (int)0xfffff000);
+  return (struct task_struct*)((int)l&0xfffff000);
+  //return list_entry( l, struct task_struct, list);
 }
 //#endif
 

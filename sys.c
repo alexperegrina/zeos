@@ -39,16 +39,13 @@ int ret_from_fork() {
 
 int sys_fork()
 {
+  
   int PID=-1;
   int i,j;
   /*vector que contendra el conjunto de numeros de paginas libres para el
   nuevo proceso*/
   int frameFree[NUM_PAG_DATA];
   unsigned int frame;
-
-  //page_table_entry *table_child;
-
-  // creates the child process
 
   //comprobamos que no este vacia la lista
   if (list_empty(&freequeue)){
@@ -69,7 +66,6 @@ int sys_fork()
       for(j = i-1; j >= 0; j--) {
         free_frame(frameFree[j]);
       }
-
       return -ENOMEM;
     }
   }
@@ -105,11 +101,8 @@ int sys_fork()
   nextPID++; //preparamos para le siguiente proceso
 
   //  ************************* Inicializar espacio de direcciones
-  page_table_entry* table_current = get_PT((void*)&taskStruct_current);
-  page_table_entry* table_new = get_PT((void*)&taskStruct_new);
-  //page_table_entry* table_current = get_PT(&taskUnion_current->task);
-  //page_table_entry* table_new = get_PT(&taskUnion_new->task);
-
+  page_table_entry *table_current = get_PT(taskStruct_current);
+  page_table_entry *table_new = get_PT(taskStruct_new);
 
   /* Copiamos kernel_code and kernel_data y user_code, este espacio de
   direcciones sera igual para los dos procesos. */
@@ -125,6 +118,7 @@ int sys_fork()
   for(i = NUM_PAG_KERNEL+NUM_PAG_CODE; i < NUM_PAG_KERNEL+NUM_PAG_CODE+NUM_PAG_DATA; i++) {
     // asignamos el frame libre al proceso hijo.
     set_ss_pag(table_new, i, frameFree[j]);
+
     /* asignamos el frame al padre para que tenga acceso a los datos
     Hay que sumarle NUM_PAG_DATA para que las nuevas asignaciones vayan a
     continuacion del bloque de data porque si no perderiamos informacion*/
@@ -134,7 +128,7 @@ int sys_fork()
     desplazar a la izquierda 12 bits ya que son los bits de offset para movernos
     dentro de la paguina, ZEOS DOC Pag. 41*/
     /* Se realiza la copia de datos entre frames */
-    copy_data((void*)(i+NUM_PAG_DATA), (void*)(i), PAGE_SIZE);
+    copy_data((void*)(i<<12), (void*)((i+NUM_PAG_DATA)<<12), PAGE_SIZE);
 
     // quitamos la relacion entre el proceso padre y el frame del proceso hijo
     del_ss_pag(table_current, i+NUM_PAG_DATA);
@@ -142,16 +136,50 @@ int sys_fork()
 
   // Indicamos donde esta la tabla de paginas del proceso y realizamos un flush del TLB
   set_cr3(taskStruct_current->dir_pages_baseAddr);
+
   /* introducimos los valores arriba del todo de la pila ya que no sabemos si al
   momento de copiar los datos hay mas datos por debajo de estas 2 posiciones*/
+  /*sabemos que por debajo hay el contexto hardware, el contexto software y la direccion
+  de retorno de la system_call*/
+
+  /*
+  De la forma que he implementado el enlaze dinamico el S.O. no tiene usabilidad
+  ya que si nos cambian la CPU con diferentes registros (mas o menos registros)
+  no funcionara correctamente este fragmento de codigo
+  */
+  //********************** Alex ************************
   // introducimos el valor de retorno para el proceso hijo
-  taskUnion_new->stack[KERNEL_STACK_SIZE-19] = 0;
+  //taskUnion_new->stack[KERNEL_STACK_SIZE-19] = 0;
   // introducimos la direccion de retorno del handler
-  taskUnion_new->stack[KERNEL_STACK_SIZE-18] = (unsigned long)&ret_from_fork;
+  //taskUnion_new->stack[KERNEL_STACK_SIZE-18] = (unsigned long)&ret_from_fork;
 
   // hacemos que el registro del esp de la estructura task_struct apunte a la
   // cima de la pila
-  taskStruct_new->kernel_esp = (unsigned long)&taskUnion_new->stack[KERNEL_STACK_SIZE-19];
+  //taskStruct_new->kernel_esp = (unsigned long)&taskUnion_new->stack[KERNEL_STACK_SIZE-19];
+  //********************** Fin Alex ************************
+
+  /*
+  Con este fragmento de codigo asumimos la usabilidad del S.O.
+  */
+  //********************** Profe ************************
+  int register_ebp;		/* frame pointer */
+  /* Map Parent's ebp to child's stack */
+  __asm__ __volatile__ (
+    "movl %%ebp, %0\n\t"
+      : "=g" (register_ebp)
+      : );
+  register_ebp = (register_ebp - (int)taskStruct_current) + (int)(taskUnion_new);
+
+  taskStruct_new->kernel_esp = register_ebp + sizeof(DWord);
+  DWord temp_ebp=*(DWord*)register_ebp;
+
+  /* Prepare child stack for context switch */
+  taskStruct_new->kernel_esp-=sizeof(DWord);
+  *(DWord*)(taskStruct_new->kernel_esp)=(DWord)&ret_from_fork;
+  taskStruct_new->kernel_esp-=sizeof(DWord);
+  *(DWord*)(taskStruct_new->kernel_esp)=temp_ebp;
+
+  //********************** Fin Profe ************************
 
   //inicializamos los estado
   taskUnion_new->task.stats.user_ticks = 0;
@@ -162,7 +190,6 @@ int sys_fork()
   taskUnion_new->task.stats.total_trans = 0;
   taskUnion_new->task.stats.remaining_ticks = 0;
   taskUnion_new->task.actualState = ST_READY;
-
 
   //  ************************* Encolar PCB en la cola de ready
   //añadimo el proceso en la cola de ready
@@ -191,20 +218,19 @@ void sys_exit() {
   sched_next_rr();
 }
 
-
 int sys_write(int fd, char * buffer, int size) {
   int error = check_fd(fd, ESCRIPTURA);
   char new_buffer[1024];
 
   if(error == 0){
-    if(buffer == NULL)  return EFAULT;  //bad address
+    if(buffer == NULL || !access_ok(VERIFY_READ, buffer, size))  return EFAULT;  //bad address
     if( size > -1){
       if(size > 0 ){
         if(size > 1024){
-          while(size > 0){
+          while(size > 1024){
             int i = 0;
             //igualamos a error para quitar un warning en la compilacion.
-            error = copy_from_user(&buffer[i], &new_buffer, 1024);
+            error = copy_from_user(&buffer[i], new_buffer, 1024);
             error = sys_write_console(new_buffer, 1024);
             size = size - 1024;
             i = i + 1024;
@@ -212,9 +238,9 @@ int sys_write(int fd, char * buffer, int size) {
             else return EINVAL;
           }
         }
-        else{
-          copy_from_user(buffer, new_buffer, 1024);
-          error = sys_write_console(new_buffer, 1024);
+        if(size > 0) {
+          copy_from_user(buffer, new_buffer, size);
+          error = sys_write_console(new_buffer, size);
         }
       }
     }
@@ -222,6 +248,36 @@ int sys_write(int fd, char * buffer, int size) {
   }
   return error;
 }
+
+/*#define TAM_BUFFER 512
+
+int sys_write(int fd, char *buffer, int nbytes) {
+char localbuffer [TAM_BUFFER];
+int bytes_left;
+int ret;
+
+	if ((ret = check_fd(fd, ESCRIPTURA)))
+		return ret;
+	if (nbytes < 0)
+		return -EINVAL;
+	if (!access_ok(VERIFY_READ, buffer, nbytes))
+		return -EFAULT;
+
+	bytes_left = nbytes;
+	while (bytes_left > TAM_BUFFER) {
+		copy_from_user(buffer, localbuffer, TAM_BUFFER);
+		ret = sys_write_console(localbuffer, TAM_BUFFER);
+		bytes_left-=ret;
+		buffer+=ret;
+	}
+	if (bytes_left > 0) {
+		copy_from_user(buffer, localbuffer,bytes_left);
+		ret = sys_write_console(localbuffer, bytes_left);
+		bytes_left-=ret;
+	}
+	return (nbytes-bytes_left);
+}*/
+
 
 int sys_gettime() {
 	return zeos_ticks;

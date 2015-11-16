@@ -75,6 +75,7 @@ sys.o:sys.c $(INCLUDEDIR)/devices.h
 utils.o:utils.c $(INCLUDEDIR)/utils.h
 
 
+
 system.o:system.c $(INCLUDEDIR)/hardware.h system.lds $(SYSOBJ) $(INCLUDEDIR)/segment.h $(INCLUDEDIR)/types.h $(INCLUDEDIR)/interrupt.h $(INCLUDEDIR)/system.h $(INCLUDEDIR)/sched.h $(INCLUDEDIR)/mm.h $(INCLUDEDIR)/io.h $(INCLUDEDIR)/mm_address.h 
 
 
